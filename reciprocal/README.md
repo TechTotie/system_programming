@@ -79,7 +79,7 @@ will produce reciprocal.o
 will produce final output binary file reciprocal.
 
 
-##Makefile
+## Makefile
 
 In order to make it easier to compile, we are using a makefile.
 
@@ -132,7 +132,7 @@ If you want to reduce optimization and produce debug symbols
 before building, as make file does not understand and does not think that changes in compiler flags requires recompilation.
 
 
-##Debugging
+## Debugging
 
 Now, consider debugging this program, we can use gdb, that is part of developer tools in GNU toolset.
 
