@@ -16,7 +16,7 @@ The macro `__cplusplus` is enabled by the compiler when we are compiling \*.cxx 
 It tells the compiler to enable anything mentioned in between the macro 
 `#ifdef __cplusplus` and `#endif`
 
-Adding `'extern "C" {'` will treat the code following this as C code until it encounters corresponding `'}'`.
+Adding `extern "C" {` will treat the code following this as C code until it encounters corresponding `}`.
 
 
 ### assert
@@ -89,14 +89,14 @@ and assuming we are in source directory
 % gcc -I ../include -c main.c
 ```
 If we want to link it to any external library, that can either be  
--`static library`, will have extension `*.a` in Linux, 'a' meaning archive, `*.lib` in windows. These libraries will be loaded in runtime,as and when required by the program. A single shared object will be loaded across multiple binaries that requires this shared object, hence the name 'shared object'.
--`dynamic/shared library`, will have extension `*.so`, 'so' meaning 'shared object' in Linux, `*.dll` in windows, 'dll' meaning 'dynamic link library'. These libraries will be loaded when loading the binary into memory. Each binary will have the a copy of static library linked with it, hence each binary will load a copy of static library into memory with it.
+- `static library`, will have extension `*.a` in Linux, 'a' meaning archive, `*.lib` in windows. These libraries will be loaded in runtime,as and when required by the program. A single shared object will be loaded across multiple binaries that requires this shared object, hence the name 'shared object'.
+- `dynamic/shared library`, will have extension `*.so`, 'so' meaning 'shared object' in Linux, `*.dll` in windows, 'dll' meaning 'dynamic link library'. These libraries will be loaded when loading the binary into memory. Each binary will have the a copy of static library linked with it, hence each binary will load a copy of static library into memory with it.
 
 
 If the libraries are present in the normal path like `/usr/lib`, then it will automatically loaded into memory.  
 If the libraries are present in some other folder, we need to tell the compiler/linker the path from which to load the libraries.
-This is done using `-L <library_path>` and `-l <library_name>`, where '-L' is used to resolve the path of the library and '-l' is followed by name of the library.  
-The library name's are always prefixed with `lib<library_name>`, for instance, if we want to link libstdc++.so, we need to link it with `-lstdc++`, the compiler will add the prefix 'lib' and '.so'.  
+This is done using `-L <library_path>` and `-l <library_name>`, where `-L` is used to resolve the path of the library and `-l` is followed by name of the library.  
+The library name's are always prefixed with `lib<library_name>`, for instance, if we want to link libstdc++.so, we need to link it with `-lstdc++`, the compiler will add the prefix `lib` and `.so`.  
 ```
 % gcc -o reciprocal reciprocal.o main.o -L /usr/lib/gcc/ -lstdc++
 ```  
