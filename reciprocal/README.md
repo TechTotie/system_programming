@@ -124,11 +124,13 @@ If you want to clean
 `% make clean`  
 
 Note that in the above make targets like reciprocal, reciprocal.o, main.o,
-we have used ${CFLAGS}, which can be used to pass any compiler flags. ${<variable>} is a way to access an environment variable in a makefile. 
+we have used ${CFLAGS}, which can be used to pass any compiler flags. ${``<variable>``} is a way to access an environment variable in a makefile. 
 If we want to produce debug symbols then we can pass -g option  
 `% make CFLAGS="-g"`  
 It is better to pass the debug flags in double quotes to avoid any whitespace issues.
-If you want to reduce optimization and produce debug symbols  
+If dont want the compiler to do any optimization while compiling then pass 'O0'.  
+`-O``<level>``` is the compiler flag to command the optimization level to compiler. If we provider -O0, it means no optimization.
+If you want to produce debug symbols and remove any optimization done by compiler, then   
 `% make CFLAGS="-O0 -g"`
 
 Another way is to export CFLAGS and then make  
