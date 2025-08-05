@@ -35,23 +35,28 @@ Exmaple: Suppose you want to check the return value from a function, then DON'T 
 ```
 	for(int i = 0; i < 100; i++) {
 		
-		assert( false != dosomething()); => If compiled with NDEBUG, dosomething() will not be called at all
-		OR
+		assert( false != dosomething()); /* => If compiled with NDEBUG, dosomething() will not be called at all */
+		/* OR */
 		int k = 0;
-		assert (-1 != (k=dosomething())); => If compiled with NDEBUG, dosomething() return value will not be assigned to k
+		assert (-1 != (k=dosomething())); /* => If compiled with NDEBUG, dosomething() return value will not be assigned to k */
 		++k;
 	}
-	Instead you can do
+
+
+	/* Instead you can do */
+
+
 	for(int i = 0; i < 100; i++) {
-		bool ret = dosomething(); => dosomething() will be called even if compiled with NDEBUG
-		assert(ret != false);  => Only this check will be skipped if compiled with NDEBUG
+		bool ret = dosomething(); /* => dosomething() will be called even if compiled with NDEBUG */
+		assert(ret != false);  => /* Only this check will be skipped if compiled with NDEBUG */
 		OR
 		int k = 0;
-		k = dosomething(); => dosomething() will be called and k will be assigned with return value from dosomething(), even if compiled with NDEBUG
+		k = dosomething(); /* => dosomething() will be called and k will be assigned with return value from dosomething(), even if compiled with NDEBUG */
 		assert(k != -1); => Only this check will be skipped if compiled with NDEBUG
 		++k;
 	}
 ```
+
 **NOTE:**
 It is **ALWAYS BETTER** to use asserts to avoid bugs at later point of time. But use it only for condition checks, not combined with any other operations.
 
