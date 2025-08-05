@@ -35,10 +35,10 @@ Exmaple: Suppose you want to check the return value from a function, then DON'T 
 ```
 	for(int i = 0; i < 100; i++) {
 		
-		assert( false != dosomething());		/* => If compiled with NDEBUG, dosomething() will not be called at all */
+		assert( false != dosomething());	/* => If compiled with NDEBUG, dosomething() will not be called at all */
 		/* OR */
 		int k = 0;
-		assert (-1 != (k=dosomething())); 	/* => If compiled with NDEBUG, dosomething() return value will not be assigned to k */
+		assert (-1 != (k=dosomething()));	/* => If compiled with NDEBUG, dosomething() return value will not be assigned to k */
 		++k;
 	}
 
@@ -47,12 +47,12 @@ Exmaple: Suppose you want to check the return value from a function, then DON'T 
 
 
 	for(int i = 0; i < 100; i++) {
-		bool ret = dosomething(); 		/* => dosomething() will be called even if compiled with NDEBUG */
-		assert(ret != false);   		/* => Only this check will be skipped if compiled with NDEBUG */
+		bool ret = dosomething();	/* => dosomething() will be called even if compiled with NDEBUG */
+		assert(ret != false);	/* => Only this check will be skipped if compiled with NDEBUG */
 		OR
 		int k = 0;
-		k = dosomething(); 	/* => dosomething() will be called and k will be assigned with return value from dosomething(), even if compiled with NDEBUG */
-		assert(k != -1); 		/* => Only this check will be skipped if compiled with NDEBUG */
+		k = dosomething();	/* => dosomething() will be called and k will be assigned with return value from dosomething(), even if compiled with NDEBUG */
+		assert(k != -1);	/* => Only this check will be skipped if compiled with NDEBUG */
 		++k;
 	}
 ```
@@ -99,7 +99,7 @@ We define target 'reciprocal' with 'main.o' and 'reciprocal.o' as dependencies. 
 Then we define each '.o' files as targets with compilation of their source files using gcc/g++.
 ```
 reciprocal: reciprocal.o main.o
-	gcc {CFLAGS} -o reciprocal reciprocal.o main.o
+	gcc ${CFLAGS} -o reciprocal reciprocal.o main.o
 
 reciprocal.o:
 	g++ ${CFLAGS} -c reciprocal.c
@@ -132,6 +132,10 @@ If we want to produce debug symbols then we can pass -g option
 It is better to pass the debug flags in double quotes to avoid any whitespace issues.
 If you want to reduce optimization and produce debug symbols
 `% make CFLAGS="-O0 -g"`
+
+Another way is to export CFLAGS and then make
+`% export CFLAGS="-O0 -g"`
+`% make`
 
 **NOTE:** Whenever you want to compile with different compiler flags, please make sure that you 'clean build', i.e., you clean and remove the artifacts completely
 before building, as make file does not understand and does not think that changes in compiler flags requires recompilation.
