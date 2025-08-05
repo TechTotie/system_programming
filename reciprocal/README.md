@@ -81,6 +81,27 @@ will produce reciprocal.o
 
 will produce final output binary file reciprocal.  
 
+If you have any include files that are present in any other directory apart from current directory of source files and system header path then we can use `-I <path>`.  
+Suppose we had all the implementation files in `source` folder, and headers in `include` folder, then we can compile using
+and assuming we are in source directory  
+```
+% g++ -I ../include -c reciprocal.cpp
+% gcc -I ../include -c main.c
+```
+If we want to link it to any external library, that can either be  
+-`static library`, will have extension `*.a` in Linux, 'a' meaning archive, `*.lib` in windows. These libraries will be loaded in runtime,as and when required by the program. A single shared object will be loaded across multiple binaries that requires this shared object, hence the name 'shared object'.
+-`dynamic/shared library`, will have extension `*.so`, 'so' meaning 'shared object' in Linux, `*.dll` in windows, 'dll' meaning 'dynamic link library'. These libraries will be loaded when loading the binary into memory. Each binary will have the a copy of static library linked with it, hence each binary will load a copy of static library into memory with it.
+
+
+If the libraries are present in the normal path like `/usr/lib`, then it will automatically loaded into memory.  
+If the libraries are present in some other folder, we need to tell the compiler/linker the path from which to load the libraries.
+This is done using `-L <library_path>` and `-l <library_name>`, where '-L' is used to resolve the path of the library and '-l' is followed by name of the library.  
+The library name's are always prefixed with `lib<library_name>`, for instance, if we want to link libstdc++.so, we need to link it with `-lstdc++`, the compiler will add the prefix 'lib' and '.so'.  
+```
+% gcc -o reciprocal reciprocal.o main.o -L /usr/lib/gcc/ -lstdc++
+```  
+The above gcc command is just for depiction. There is no need to give path to libraries inside /usr/lib as there are already part of `LD_LIBRARY_PATH`. Also the standard library is already linked by default.
+
 
 ## Makefile
 
