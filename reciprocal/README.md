@@ -129,7 +129,7 @@ If we want to produce debug symbols then we can pass -g option
 `% make CFLAGS="-g"`  
 It is better to pass the debug flags in double quotes to avoid any whitespace issues.
 If dont want the compiler to do any optimization while compiling then pass 'O0'.  
-`-O``<level>``` is the compiler flag to command the optimization level to compiler. If we provider -O0, it means no optimization.
+`-O``<level>`` ` is the compiler flag to command the optimization level to compiler. If we provider -O0, it means no optimization.
 If you want to produce debug symbols and remove any optimization done by compiler, then   
 `% make CFLAGS="-O0 -g"`
 
