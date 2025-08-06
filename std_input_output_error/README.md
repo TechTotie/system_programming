@@ -56,6 +56,36 @@ In order to optimize and avoid writing standard output onto screen every time a 
 But this is not the case with stderr, the stderr has to be flushed each time, it is written as it might be important for the program to show the error when it occurs rather than buffering the error.
 So anything written into stderr using `fprintf(stderr, "<string>",...)` will be immediately displayed onto screen.
 
+So the C and C++ Standard library provides the following api's to read and write to standard I/O
+```
+/* In C */
+#include <stdio.h>
+scanf("<format_specifiers>", <variables>); /* read from standard input stdin */
+printf("<string><format_specifiers>", <variables>); /* write to standard output stdout */
+fprintf(stderr, "<string><format_specifiers>",<variables>); /* write to standard error */
+
+/* In C++ */
+#include <iostream>
+std::cin >> <variables>; // read from standard input
+std::cout << <string> << <variables>; // write to standard output
+std::cerr << <string> << <variables>; // write to standard error
+
+/* Direct Unix calls */
+#include <unistd.h>
+char buffer[1024];
+read(stdin, buffer, sizeof(buffer)); /* read from stdin */
+write(stdout, buffer, sizeof(buffer)); /* write to stdout */
+write(stderr, buffer, sizeof(buffer)); /* write to stderr */
+```
+
+**NOTE**  
+In C++, whenever we use std::cout << std::endl;, it flsuhes the standard output buffer.
+So, if you need to use without fliushing, use `newline character '\n'`
+Similar to using flush() and fflush() for printf(), we can use it for read() and write() calls in Unix programs for stdout.
+stderr will be by default flushed on write.
+Also the stdin, stdout and stderr will be opened and closed by default when we run our binary on a shell.
+
+
 So if we have the following program
 ```
 #include <unistd.h>
