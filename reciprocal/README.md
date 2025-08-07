@@ -58,6 +58,13 @@ Exmaple: Suppose you want to check the return value from a function, then DON'T 
 	}
 ```
 
+It is good to use assert for checking a pointer is assigned to null or not.
+```
+assert(pointer != NULL);
+```
+Dont use assert directly to check for user inputs and exit the program. Its not a good way to program.
+
+
 **NOTE:**
 It is **ALWAYS BETTER** to use asserts to avoid bugs at later point of time. But use it only for condition checks, not combined with any other operations.
 
