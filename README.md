@@ -10,4 +10,6 @@ Programs to depict Unix concepts and usage of Unix system calls.
 #### * [Environment and Return Values](environment/README.md)
 #### * [Unix Temporary Files](temporary_files/README.md)
 #### * [Errno and Error Recovery](errno_error_recovery/README.md)
+#### * [Processes](processes/README.md)
+#### * [Signals](signals/README.md)
 
