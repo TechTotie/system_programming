@@ -4,6 +4,9 @@ Whenever we run a program in linux, it creates a running process. A running proc
 
 GNU/Linux provides `pthread` library and header file which has all the api's related to creation and managing the threads.
 
+** NOTE **
+Try to avoid using errno values when using pthread library and api's as most of the pthread api's will return the error number as return values and do not set the global errno variable.
+
 ** Create a Thread **
 
 A thread can be created using `pthread_create` call, which takes in 2 parameters
@@ -159,17 +162,270 @@ Don't do `(void *)&prime` as this returns the location of prime, which is a loca
 ** NOTE ** that the threads can be joined only if the threads are joinable.
 If the threads are in the detached state, they cannot be joined.
 
+** Thread Attributes and Detached Threads **
 The threads can be created in 2 states
 - Joinable state
 - Detached state.
 
+By defaul the threads are created in joinable state.
 If the threads are created as joinable threads, then the threads can be joined.
 
 If the threads are created as detachable threads, then the threads cannot be joined.
 The detached threads are similar to that of the `zombie processes`, where Linux takes up the responsibility of cleaning up these threads.
+On the other hand if the thread is joinable, then it is the responsibility of the parent thread to clear the exit status of the thread by joining this thread to itself.
+A thread can be joined in any other thread. The `pthread_join` will also collect the return value of the thread.
 
-The threads can be created as joinable or detached by setting the attrribute
- 
+We can create a thread in detached state by using thread attributes.
+
+The thread attributes are used while creation of the thread as a parameter to `pthread_create`.
+
+In order to create the thread attributes
+- We need to declare a varibale of type `pthread_attr_t`
+- We need to initialize it using `ptherad_attr_init` and pass the variable as an argument to this function
+- We can modify the attributes accordingly
+- We can use in thread creation function
+- We can destroy the attribute using `pthread_attr_destroy`
+
+In the below example, we create a detachable thread using `pthread attributes`
+```
+void * thread_fn(void *)
+{
+ ...
+	// Do something
+	...
+}
+
+int main()
+{
+	pthread_t tid;
+	pthread_attr_t attr;
+
+	/* Initialize the pthread attribute */
+	ptherad_attr_init(&attr);
+
+	/* set the thread detach state to detached */
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	/* create pthread using attribute */
+	/* Pass the attribute as argument to pthread_create */
+	int ret = pthread_create(&tid, &attr, thread_fn, NULL);
+	if(ret != 0) {
+		/* Return value has the error number */
+		/* strerror(error_number) will return a fixed error string for that error number, please cross check for the error in man page of the pthread function that returned this error */
+		fprintf(stderr,"Error: %s", strerror(ret));
+		exit(1);
+	}
+
+	/* Destroy the attribute */
+	pthread_destroy(&attr);
+
+	/* Try joining this thread, it will return EINVAL - Invalid argument as the thread id is argument which is a detached thread and cannot be joined */
+	{
+		int ret = pthread_join(tid, NULL);
+		if(ret != 0) {
+			fprintf(stderr, "Error %s\n", strerror(ret));
+			exit(1);
+		}
+	}
+}
+```
 
 
+The thread can also be detached by using `pthread_detach(pthread_t tid)`.
+Once the thread is detached, its resources are collected by the system after the thread exits. It cannot be joined again and there is no need for another thread to collect its resources.
 
+** Thread Cancellation **
+
+Normally a thread exits using `pthread_exit` or completes execution and returns. 
+In some cases, it may be needed that a thread needs another thread to exit or it needs to cancel the execution of another thread.
+We can use the `pthread_cancel(ptherad_t tid)` api to cancel the execution of another thread.
+
+A thread can be
+- Asynchronously cancelled - cancelled anytime during execution
+- Syncronously cancelled - cancellation requests are queued up and processed at particular `cancellation points`
+- Uncancellable - cancellation requests are just ignored.
+
+A thread's cancellation depends on the following factors
+- Cancellation State - Enabled/Disabled
+- Cancellation Type - Synchronous/Asynchronous
+
+```
+int pthread_setcancelstate(int state, int *oldstate);
+int pthread_setcanceltype(int type, int *oldtype);
+```
+
+The following exvents take take on thread cancellation
+- Cleanup function is called, 
+		-	thread specific data is deallocated
+- Clean up function is popped
+- Thread is termincated by calling `pthread_exit(void ** retval)`
+
+There might be data leaks when the thread is cancelled asynchronously, that is why pthread library allows to register(push) clean-up functions, which will be called and thread specific data can be deallocated on thread cancellation/termination.
+
+But during normal termination of thread, the user has to call the clean-up function to deallocate the thread-specific data and deregister(pop) the clean-up handler.
+
+We can also enable and disable the thread cancellation for any atomic operations in asynchronuous cancellation mode too.
+```
+void * thread_fn(void *)
+{
+	// Do Something
+
+	/* Atomic Operations start */
+	/* Disable thread cancellation */
+	int oldstate = 0;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, oldstate);
+
+	// Perform the atomic operations
+
+	/* Atomic operations end */
+	/* Enable thread cancellation or reset to old state */
+	pthread_setcancelstate(oldstate, NULL);
+
+	// Do something else
+
+	return;
+}
+```
+
+If we perform cancel when the thread is in non-cancellable state, then the cancellation request will be queued, and executed once the is cancellable again.
+
+For synchronous cancellation, we need to have `cancellation points` at various steps in the thread function, so that the thread can be cancelled at these cancellation points. These can be set by either calling
+- `pthread_testcancel` or 
+- some system functions that are cancellable, listed in `man 7 pthreads`
+
+To make a thread synchronously cancellable, use
+```
+void * thread_fn(void *)
+{
+	int old_type;
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old_type);
+}
+```
+To make it asynchronous, use
+`pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_type)`.
+
+
+** Thread Specific Data **
+
+All the threads share data, so any changes in global or static variables, will be reflected across all the threads.
+In order to have thread specific data, GNU/Linux provides the following types and api's
+- you need to create a key using `pthread_key_create`. Create a global key of type `pthread_key_t` which is shared across all the threads.
+- you can initilaize this key with a `clean-up` function that will be called on termination of thread. Note that the clean-up function will be called directly with the `viod *` pointer to the thread specific data, that can be directly de-allocated. There is no need to call `pthread_getspecific` with the key in clean-up function.
+- you need to set the value of type `void *` for this key inside the thread using `pthread_setspecific(pthread_key_t key, void* data)`
+- you can access this thread specific data using `void * data = pthread_get_spcific(pthread_key_t key)`
+
+Consider a use case, where each thread needs to have its own log file to record its actions
+```
+/* Error function */
+#define handle_error(en, msg) \
+	do { errno = en; perror(en); }while(0);
+
+/* Have a global key across all threads */
+
+pthread_key_t key;
+
+/* Have a clean up function that is to be registered for clean up during thread termination */
+void close(void * data)
+{
+	FILE * filename = (FILE *)data;
+	close(filename);
+}
+
+
+/* set the thread specific data and use it across other functions called using thread_fn */
+void * thread_fn(void *data)
+{
+	char filename[1024];
+	fprintf(filename, "thread_%d.logfile",pthread_self());
+
+	/* set the thread specific data which is the filename */
+	pthread_setspecific(key, filename);
+
+	char data[1024];
+	fprintf(data, "Thread data for thread %d \n",pthread_self());
+	write_to_file(data);
+
+}
+
+void write_to_file(char * msg)
+{
+	FILE * filename = pthread_getspecific(key);```
+	fprintf(filename,"%s",msg);
+}
+
+/* main fn has to create pthread_key_create */
+int main()
+{
+	/* Create the key and register the clean up function */
+
+	pthread_create_key(&key, close);
+
+	pthread_t tid[5];
+
+	for(int i = 0; i < 5; i++) {
+		int ret = pthread_create(&tid[i], NULL, thread_fn, NULL);
+
+		if(ret != 0) {
+			handle_error(ret, "pthread_create");
+		}
+		pthread_join(tid, NULL);
+	}
+}
+```
+
+
+See the example [thread_specific_data.c](thread_specific_data.c) for more detailed example.
+
+In the example we can see that we have used 2 ways to read from the file.
+- read using fd, which is obtained by `int fileno(FILE *stream)`
+- read using `fread(FILE * stream, int no_of_elements_of_array, int size_of_each_array_element, void * buffer);`
+- Make sure you point to the first position of the file using `fseek(FILE *stream, 0L, SEEK_SET)` to make it point to first character of the file.
+
+We can also note the usage of
+```
+for (int i = 0; i < MAX; i++) {
+	{
+		int k = i;
+		ret = pthread_create(&tid, NULL, thread_fn, &k);
+	}
+}
+```
+instead of passing `&i` directly, this is because the thread is created and immedicately i is incremented and since we are passing the address of i, the value of i will be updated, which will also be reflected in the thread.
+
+This type of cleanup will be done only when the thread terminates using `pthread_exit()` or if a thread is cancelled by another thread and specially in case of thread specific data. How will the clean up be done for a thread that exits normally and if it does not have any thread specific data.
+
+GNU/Linux provides *** Clean Up Handlers *** for such cases.
+- We need to register the clean-up handler with `pthread_cleanup_push(void (*clean_up_func)(void*), void * data)`, where we need to provide the clean-up function of type `void cleanup(void *)` and data of type `void *`.
+- The function can be deregistered by calling `pthread_cleanup_pop(int num)`, where a non zero number means that the clean up function is called before the cleaan up function is deregistered.
+
+ Refer the code in [pthread_cleanup_handler.c](pthread_cleanup_handler.c)
+
+
+The same clean up in C++ needs to be done such that the pthread_exit should be called from a higher level exception rather than direct call.
+This is because C++ does not guarantee calling destructors of automatic variables which are declared at beginning, when the thread exits directly using `pthread_exit`. But when we use exceptions, there will be stack unwinding and then we can call pthread_exit in the exception.
+
+```cpp
+#include <pthread.h>
+
+class ThreadExitException {
+		private:
+			void * thread_return_value;
+		public:
+			ThreadExitException(void * ret_val)
+			  : thread_return_value{ret_val} {
+			}
+			void* DoExit() {
+				pthread_exit(thread_return_value);
+			}
+};
+
+void * thread_fn(void * data)
+{
+	try {
+		// Due to some reasons need to exit
+		throw ThreadExitException(NULL); // or any return value
+	} catch(ThreadExitException &e) {
+		e.DoExit();
+	}
+}
+```
